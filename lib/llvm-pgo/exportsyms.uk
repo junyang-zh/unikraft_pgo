@@ -1,3 +1,8 @@
 __llvm_profile_instrument_memop
 __llvm_profile_instrument_range
 __llvm_profile_instrument_target
+llvm_perf_file
+llvm_perf_open
+llvm_perf_read
+llvm_perf_release
+llvm_perf_reset

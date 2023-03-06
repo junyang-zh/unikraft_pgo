@@ -1,10 +1,5 @@
 #define pr_fmt(fmt)	"pgo: " fmt
 
-//#include <linux/debugfs.h>
-//#include <linux/fs.h>
-//#include <linux/module.h>
-//#include <linux/slab.h>
-//#include <linux/vmalloc.h>
 #include <uk/essentials.h>
 #include <uk/alloc.h>
 #include <uk/plat/lcpu.h>
@@ -14,9 +9,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stddef.h>
-#include "pgo.h"
-
-static struct dentry *directory;
+#include "prf_data.h"
+#include "uk/pgo.h"
 
 struct prf_private_data {
 	void *buffer;
@@ -245,8 +239,8 @@ out:
 	return err;
 }
 
-/* open() implementation for PGO. Creates a copy of the profiling data set. */
-static int prf_open(struct inode *inode, struct file *file)
+/* Creates a copy of the profiling data set. */
+int llvm_perf_open(struct llvm_perf_file *file)
 {
 	struct prf_private_data *data;
 	unsigned long flags;
@@ -275,19 +269,25 @@ out:
 }
 
 /* read() implementation for PGO. */
-static ssize_t prf_read(struct file *file, char __user *buf, size_t count,
-			loff_t *ppos)
+ssize_t llvm_perf_read(struct llvm_perf_file *file, char *buf, size_t count)
 {
 	struct prf_private_data *data = file->private_data;
 
-	// BUG_ON(!data);
+	if (!data) {
+		return -1;
+	}
 
-	return simple_read_from_buffer(buf, count, ppos, data->buffer,
-				       data->size);
+	size_t i;
+
+	for (i = 0; i < count && i < data->size; ++i) {
+		buf[i] = ((char*)(data->buffer))[i];
+	}
+
+	return i;
 }
 
 /* release() implementation for PGO. Release resources allocated by open(). */
-static int prf_release(struct inode *inode, struct file *file)
+int llvm_perf_release(struct llvm_perf_file *file)
 {
 	struct prf_private_data *data = file->private_data;
 
@@ -299,17 +299,8 @@ static int prf_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static const struct file_operations prf_fops = {
-	.owner		= THIS_MODULE,
-	.open		= prf_open,
-	.read		= prf_read,
-	.llseek		= default_llseek,
-	.release	= prf_release
-};
-
-/* write() implementation for resetting PGO's profile data. */
-static ssize_t reset_write(struct file *file, const char __user *addr,
-			   size_t len, loff_t *pos)
+/* Resetting PGO's profile data. */
+ssize_t llvm_perf_reset()
 {
 	struct llvm_prf_data *data;
 
@@ -339,45 +330,5 @@ static ssize_t reset_write(struct file *file, const char __user *addr,
 		}
 	}
 
-	return len;
-}
-
-static const struct file_operations prf_reset_fops = {
-	.owner		= THIS_MODULE,
-	.write		= reset_write,
-	.llseek		= noop_llseek,
-};
-
-/* Create debugfs entries. */
-static int pgo_init(void)
-{
-	
-	directory = debugfs_create_dir("pgo", NULL);
-	if (!directory)
-		goto err_remove;
-
-	if (!debugfs_create_file("profraw", 0600, directory, NULL,
-				 &prf_fops))
-		goto err_remove;
-
-	if (!debugfs_create_file("reset", 0200, directory, NULL,
-				 &prf_reset_fops))
-		goto err_remove;
-
 	return 0;
-
-err_remove:
-	pr_err("initialization failed\n");
-	return -EIO;
 }
-UK_CTOR(pgo_init);
-
-/* Remove debugfs entries. */
-static void pgo_exit(void)
-{
-	debugfs_remove_recursive(directory);
-}
-// UK_DTOR needed!
-
-module_init(pgo_init);
-module_exit(pgo_exit);

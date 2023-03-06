@@ -1,5 +1,7 @@
-#ifndef _PGO_H
-#define _PGO_H
+#ifndef _PRF_DATA_H
+#define _PRF_DATA_H
+
+#include <sys/param.h>
 
 /*
  * Note: These internal LLVM definitions must match the compiler version.
@@ -25,10 +27,10 @@
 		 (__u64)'R' << 8  |	\
 		 (__u64)129)
 
-#define LLVM_INSTR_PROF_RAW_VERSION		5
-#define LLVM_INSTR_PROF_DATA_ALIGNMENT	8
-#define LLVM_INSTR_PROF_IPVK_FIRST		0
-#define LLVM_INSTR_PROF_IPVK_LAST		1
+#define LLVM_INSTR_PROF_RAW_VERSION			5
+#define LLVM_INSTR_PROF_DATA_ALIGNMENT		8
+#define LLVM_INSTR_PROF_IPVK_FIRST			0
+#define LLVM_INSTR_PROF_IPVK_LAST			1
 #define LLVM_INSTR_PROF_MAX_NUM_VAL_PER_SITE	255
 
 #define LLVM_VARIANT_MASK_IR_PROF	(0x1ULL << 56)
@@ -82,7 +84,7 @@ struct llvm_prf_data {
 	void *values;
 	const __u32 num_counters;
 	const __u16 num_value_sites[LLVM_INSTR_PROF_IPVK_LAST + 1];
-} __aligned(LLVM_INSTR_PROF_DATA_ALIGNMENT);
+} __attribute__((aligned((LLVM_INSTR_PROF_DATA_ALIGNMENT))));
 
 /**
  * structure llvm_prf_value_node_data - represents the data part of the struct
@@ -182,4 +184,4 @@ __DEFINE_PRF_SIZE(vnds);
 
 #undef __DEFINE_PRF_SIZE
 
-#endif /* _PGO_H */
+#endif /* _PRF_DATA_H */

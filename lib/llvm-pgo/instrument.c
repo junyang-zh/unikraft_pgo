@@ -7,14 +7,15 @@
 #include <uk/essentials.h>
 #include <uk/bitops.h>
 #include <uk/plat/spinlock.h>
-#include "pgo.h"
+#include <stddef.h>
+#include "prf_data.h"
 
 /*
  * This lock guards both profile count updating and serialization of the
  * profiling data. Keeping both of these activities separate via locking
  * ensures that we don't try to serialize data that's only partially updated.
  */
-static uk_spinlock pgo_lock = UK_SPINLOCK_INITIALIZER();
+static __spinlock pgo_lock = UKARCH_SPINLOCK_INITIALIZER();
 static int current_node;
 
 unsigned long prf_lock(void)
@@ -66,8 +67,8 @@ void __llvm_profile_instrument_target(__u64 target_value, void *data, __u32 inde
 	struct llvm_prf_value_node *curr;
 	struct llvm_prf_value_node *min = NULL;
 	struct llvm_prf_value_node *prev = NULL;
-	__u64 min_count = __u64_MAX;
-	u8 values = 0;
+	__u64 min_count = __U64_MAX;
+	__u8 values = 0;
 	unsigned long flags;
 
 	if (!p || !p->values)
@@ -122,16 +123,16 @@ out:
 
 /* Counts the number of times a range of targets values are seen. */
 void __llvm_profile_instrument_range(__u64 target_value, void *data,
-					 __u32 index, s64 precise_start,
-					 s64 precise_last, s64 large_value);
+					 __u32 index, __s64 precise_start,
+					 __s64 precise_last, __s64 large_value);
 void __llvm_profile_instrument_range(__u64 target_value, void *data,
-					 __u32 index, s64 precise_start,
-					 s64 precise_last, s64 large_value)
+					 __u32 index, __s64 precise_start,
+					 __s64 precise_last, __s64 large_value)
 {
-	if (large_value != S64_MIN && (s64)target_value >= large_value)
+	if (large_value != __S64_MIN && (__s64)target_value >= large_value)
 		target_value = large_value;
-	else if ((s64)target_value < precise_start ||
-		 (s64)target_value > precise_last)
+	else if ((__s64)target_value < precise_start ||
+		 (__s64)target_value > precise_last)
 		target_value = precise_last + 1;
 
 	__llvm_profile_instrument_target(target_value, data, index);
