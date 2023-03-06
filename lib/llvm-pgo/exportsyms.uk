@@ -1,0 +1,3 @@
+__llvm_profile_instrument_memop
+__llvm_profile_instrument_range
+__llvm_profile_instrument_target

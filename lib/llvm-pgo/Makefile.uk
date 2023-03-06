@@ -1,0 +1,5 @@
+$(eval $(call addlib_s,libllvm_pgo,$(CONFIG_LIBLLVM_PGO)))
+
+COMPFLAGS-$(LIBLLVM_PGO)	+= -fprofile-instr-generate
+
+LIBLLVM_PGO_SRCS-y += $(LIBLLVM_PGO_BASE)/fs.c $(LIBLLVM_PGO_BASE)/instrument.c
