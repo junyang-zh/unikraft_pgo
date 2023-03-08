@@ -38,10 +38,10 @@ static void prf_fill_header(void **buffer)
 {
 	struct llvm_prf_header *header = *(struct llvm_prf_header **)buffer;
 
-#ifdef CONFIG_64BIT
-	header->magic = LLVM_INSTR_PROF_RAW_MAGIC_64;
-#else
+#if defined(CONFIG_ARCH_ARM_32)
 	header->magic = LLVM_INSTR_PROF_RAW_MAGIC_32;
+#else
+	header->magic = LLVM_INSTR_PROF_RAW_MAGIC_64;
 #endif
 	header->version = LLVM_VARIANT_MASK_IR_PROF | LLVM_INSTR_PROF_RAW_VERSION;
 	header->data_size = prf_data_count();
@@ -269,7 +269,7 @@ out:
 }
 
 /* read() implementation for PGO. */
-ssize_t llvm_perf_read(struct llvm_perf_file *file, char *buf, size_t count)
+ssize_t llvm_perf_read(struct llvm_perf_file *file, char *buf, size_t count, size_t off)
 {
 	struct prf_private_data *data = file->private_data;
 
@@ -279,7 +279,7 @@ ssize_t llvm_perf_read(struct llvm_perf_file *file, char *buf, size_t count)
 
 	size_t i;
 
-	for (i = 0; i < count && i < data->size; ++i) {
+	for (i = off; i < count && i < data->size; ++i) {
 		buf[i] = ((char*)(data->buffer))[i];
 	}
 
@@ -331,4 +331,21 @@ ssize_t llvm_perf_reset()
 	}
 
 	return 0;
+}
+
+void *llvm_perf_dump_thread_fn(void *arg) {
+	const char *file_name = "/redis.perfraw";
+	size_t dump_period = 1;
+	struct prf_private_data data;
+	while (1) {
+		int fd = open(file_name, O_RDWR | O_CREAT);
+		unsigned long flags = prf_lock();
+		prf_serialize(&data);
+		prf_unlock(flags);
+		write(fd, data.buffer, data.size);
+		close(fd);
+		uk_free(uk_alloc_get_default(), data.buffer);
+		uk_pr_crit("[uk_pgo] %lu bytes wrote to \'%s\'\n", data.size, file_name);
+		sleep(dump_period);
+	}
 }

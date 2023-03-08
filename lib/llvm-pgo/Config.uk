@@ -2,3 +2,4 @@ menuconfig LIBLLVM_PGO
 	bool "llvm-pgo: Profile Guided Optimization using LLVM"
 	default n
 	select LIBUKALLOC
+	select LIBVFSCORE
