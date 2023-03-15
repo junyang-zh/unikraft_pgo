@@ -113,6 +113,14 @@ if LIBUKBOOT
 		depends on LIBTLSF_INCLUDED
 		select LIBTLSF
 
+		config LIBUKBOOT_INITPGALLOC
+		bool "pgalloc"
+		depends on LIBPGALLOC_INCLUDED
+		select LIBPGALLOC
+		help
+		  Profile guided post link allocation library for Unikraft.
+		  Designed as Junyang's BA thesis.
+
 		config LIBUKBOOT_NOALLOC
 		bool "None"
 

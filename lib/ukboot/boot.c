@@ -63,6 +63,10 @@
 #include <uk/tinyalloc.h>
 #define uk_alloc_init uk_tinyalloc_init
 #endif
+#if CONFIG_LIBUKBOOT_INITPGALLOC
+#include <uk/pgalloc.h>
+#define uk_alloc_init uk_pgalloc_init
+#endif
 #if CONFIG_LIBUKSCHED
 #include <uk/sched.h>
 #endif /* CONFIG_LIBUKSCHED */
