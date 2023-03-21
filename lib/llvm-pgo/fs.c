@@ -334,7 +334,7 @@ ssize_t llvm_perf_reset()
 }
 
 void *llvm_perf_dump_thread_fn(void *arg) {
-	const char *file_name = "/redis.perfraw";
+	const char *file_name = "/.perfraw";
 	size_t dump_period = 1;
 	struct prf_private_data data;
 	while (1) {
